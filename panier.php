@@ -169,9 +169,10 @@
 	}
 
 	$prodvente = $DB->querys('SELECT remise, montantpgnf, montantpeu, montantpus, montantpcfa, virement, cheque, numcheque, banqcheque FROM validvente where pseudop=?', array($_SESSION['idpseudo']));
-	$prodcredit= $DB->querys("SELECT *FROM limitecredit where idclient='{$_SESSION['clientvip']}' ");
-	$limiteCredit=$prodcredit['montant'];
-
+	if (!empty($_SESSION['clientvip'])) {
+		$prodcredit= $DB->querys("SELECT *FROM limitecredit where idclient='{$_SESSION['clientvip']}' ");
+		$limiteCredit=$prodcredit['montant'];
+	}
 	if (!empty($products)) {?>
 
 		<table class="payement" style="margin-top:-8px;">
@@ -602,34 +603,36 @@
 					                  }
 					                }?></select>
 					            </td><?php
-								if (-$panier->compteClient($_SESSION['clientvip'], "gnf")>$limiteCredit) {?>
-									<td style="background-color:red; color:white; font-weight:bold;">Compte Bloqué</td><?php
-								}else{
+								if (!empty($_SESSION['clientvip'])) {
+									if (-$panier->compteClient($_SESSION['clientvip'], "gnf")>$limiteCredit) {?>
+										<td style="background-color:red; color:white; font-weight:bold;">Compte Bloqué</td><?php
+									}else{
 
-									if (empty($_SESSION['clientvip']) and empty($_SESSION['clientvipcash'])) {
-									}else{?>
-
-										<input type="hidden" name="reste" value="<?=$panier->total();?>">
-
-										<td><input style="background-color:orange; cursor: pointer;" type="submit" name="proformat" value="Proformat"></td><?php
-
-										if (!empty($_SESSION['clientvipcash'])) {
-
-											if ($total<=0) {?>
-												
-												<td><input style="cursor: pointer;"  type="submit" name="payer" value="Valider"></td><?php
-											}
-
+										if (empty($_SESSION['clientvip']) and empty($_SESSION['clientvipcash'])) {
 										}else{?>
 
-											<td><?php 
-												if ($_SESSION['restriction']=='ok') {?>
+											<input type="hidden" name="reste" value="<?=$panier->total();?>">
 
-													<input style="cursor: pointer;"  type="submit" name="payer" value="Valider"><?php 
-												}?>
-											</td><?php
+											<td><input style="background-color:orange; cursor: pointer;" type="submit" name="proformat" value="Proformat"></td><?php
 
-										} 
+											if (!empty($_SESSION['clientvipcash'])) {
+
+												if ($total<=0) {?>
+													
+													<td><input style="cursor: pointer;"  type="submit" name="payer" value="Valider"></td><?php
+												}
+
+											}else{?>
+
+												<td><?php 
+													if ($_SESSION['restriction']=='ok') {?>
+
+														<input style="cursor: pointer;"  type="submit" name="payer" value="Valider"><?php 
+													}?>
+												</td><?php
+
+											} 
+										}
 									}
 								}?>
 							</tr><?php
