@@ -238,9 +238,14 @@ if (isset($_SESSION['pseudo'])) {
             <td style="text-align:right"><?= number_format($product->remise,0,',',' '); ?></td>
 
             <td style="text-align: right"><?= number_format(($product->Total-$product->remise),0,',',' '); ?></td>
-            <td style="text-align:right"><?= number_format($product->montantpaye,0,',',' '); ?> </td>
+            <td style="text-align:right"><?= number_format($product->montantpaye,0,',',' '); ?> </td><?php 
 
-            <td><?= $panier->nomClient($product->num_client); ?></td>
+            if (!empty($panier->nomClient($product->num_client))) {?>
+
+              <td><?= $panier->nomClient($product->num_client); ?></td><?php 
+            }else{?>
+              <td> Client cash (<?= ucwords($product->nomclient ); ?>)</td><?php 
+            }?>
 
              <td style="text-align: right; padding-right: 10px;"><?=number_format(-$panier->compteClient($product->num_client, 'gnf'),0,',',' '); ?></td>
              <?php 

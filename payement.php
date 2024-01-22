@@ -569,44 +569,47 @@ if (is_null($_SESSION['clientvip']) and is_null($_SESSION['clientvipcash'])) {
 
 		$reste=$panier->espace($_POST['reste'])+$fraisup;
 
-		if ($reste<=0) {
+		if (!empty($numclient)) {
 
-			if (empty($datev)) {
+			if ($reste<=0) {
 
-				$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, now())', array($numclient, 0, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse));
+				if (empty($datev)) {
 
+					$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, now())', array($numclient, 0, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse));
+
+				}else{
+
+					$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, ?)', array($numclient, 0, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse, $datev));
+
+				}
 			}else{
 
-				$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, ?)', array($numclient, 0, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse, $datev));
+				if (empty($datev)) {
+
+					$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, now())', array($numclient, -$reste, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse));
+
+				}else{
+
+					$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, ?)', array($numclient, -$reste, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse, $datev));
+
+				}
 
 			}
-		}else{
 
-			if (empty($datev)) {
+			$cumbenef=0;
+				
+			$prodtop=$DB->querys('SELECT id_client, montant, benefice FROM topclient WHERE id_client=?', array($numclient));
 
-				$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, now())', array($numclient, -$reste, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse));
+			$newbenef=$prodtop['benefice']+$cumbenef;
+			$newmontant=$prodtop['montant']+$total;
 
+			if (empty($prodtop)) {
+
+				$DB->insert('INSERT INTO topclient (id_client, montant, benefice, pseudo) VALUES(?, ?, ?, ?)', array($numclient, $total, $cumbenef, $_SESSION["pseudo"]));
 			}else{
 
-				$DB->insert('INSERT INTO bulletin (nom_client, montant, devise, libelles, numero, caissebul, lieuvente, date_versement) VALUES(?, ?, ?, ?, ?, ?, ?, ?)', array($numclient, -$reste, 'gnf', "reste à payer", $init.$numero_commande, $caisse, $lieuventecaisse, $datev));
-
+				$DB->insert('UPDATE topclient SET montant = ?, benefice=? WHERE id_client = ?', array($newmontant, $newbenef, $numclient));
 			}
-
-		}
-
-		$cumbenef=0;
-			
-		$prodtop=$DB->querys('SELECT id_client, montant, benefice FROM topclient WHERE id_client=?', array($numclient));
-
-		$newbenef=$prodtop['benefice']+$cumbenef;
-		$newmontant=$prodtop['montant']+$total;
-
-		if (empty($prodtop)) {
-
-			$DB->insert('INSERT INTO topclient (id_client, montant, benefice, pseudo) VALUES(?, ?, ?, ?)', array($numclient, $total, $cumbenef, $_SESSION["pseudo"]));
-		}else{
-
-			$DB->insert('UPDATE topclient SET montant = ?, benefice=? WHERE id_client = ?', array($newmontant, $newbenef, $numclient));
 		}
 
 		if (($panier->espace($_POST['reste'])+$fraisup)<0) {// Pour separer le surplus d'especes et autres modes de vente
